@@ -1,47 +1,29 @@
-<<<<<<< HEAD
-# Expense-Tracker
-=======
 # Pennywise — Personal Expense Tracker
 
-A responsive expense tracker with a Flask JSON API and a separate React/Vite frontend. It uses SQLAlchemy, Flask-Login for the original server-rendered app, JWT bearer auth for the SPA, SQLite, Bootstrap styling, and Chart.js.
-
-## Features
-
-- Private accounts with Werkzeug password hashing and session-based authentication
-- Create, edit, delete, and browse income and expense transactions
-- Category, month, date-range, transaction-type, and amount/date sorting filters
-- Monthly income, spending, balance, category breakdown, and six-month spending trend
-- Per-month budget guide with progress indicator
-- CSV export of transactions
-- CSRF protection, server-side validation, account ownership checks, and responsive layouts
-- JSON API for the React frontend with signed, expiring JWT access tokens
+A responsive expense tracker with a Flask JSON API and React/Vite frontend. It supports account registration, income and expense transactions, monthly summaries, budgets, filters, and CSV export.
 
 ## Run locally
 
-1. Install Python 3.10 or newer.
-2. Create and activate a virtual environment:
+1. Install Python 3.10 or newer and create a virtual environment:
 
    ```powershell
    py -m venv .venv
    .\.venv\Scripts\Activate.ps1
-   ```
-
-3. Install dependencies and set local configuration:
-
-   ```powershell
    pip install -r requirements.txt
    Copy-Item .env.example .env
    ```
 
-4. Replace `SECRET_KEY` and `JWT_SECRET_KEY` in `.env` with long random secrets, then start the API:
+2. Set `SECRET_KEY` and `JWT_SECRET_KEY` in `.env` to long random secrets. To use the linked Supabase project, replace `YOUR_DATABASE_PASSWORD` in `SUPABASE_DB_URL` with the database password from Supabase **Project Settings → Database**. URL-encode special characters in the password. The connection uses TLS (`sslmode=require`). Leave `SUPABASE_DB_URL` unset to use local SQLite.
+
+3. Start the API:
 
    ```powershell
    flask --app wsgi:app run --debug
    ```
 
-   SQLite data is stored under `instance/expense_tracker.db`.
+   The app creates the SQLAlchemy tables when it starts. Existing local SQLite data is not copied to Supabase.
 
-5. In another terminal, start the React frontend:
+4. In another terminal, start the frontend:
 
    ```powershell
    cd frontend
@@ -50,23 +32,17 @@ A responsive expense tracker with a Flask JSON API and a separate React/Vite fro
    npm run dev
    ```
 
-   Open http://localhost:5173. Set `VITE_API_URL` to the API base (including `/api`) in `frontend/.env` if it differs from `http://127.0.0.1:5000/api`.
+   Open http://localhost:5173. Set `VITE_API_URL` if the API is not at `http://127.0.0.1:5000/api`.
 
-## Deploy to Render and Vercel
+## Deploy
 
-The repository needs to be pushed to a Git provider before either host can build it.
+The root `render.yaml` configures the Flask API on Render. Add `SUPABASE_DB_URL` in Render using the Supabase connection string and set `CORS_ORIGINS` to the deployed frontend origin(s). Import `frontend` as the Vercel root directory and set `VITE_API_URL` to the Render API URL ending in `/api`.
 
-1. Create a Render web service from the repository using the root `render.yaml` blueprint. The service runs `gunicorn wsgi:app`; SQLite is stored on the configured persistent disk.
-2. Copy the Render service URL, such as `https://your-service.onrender.com`.
-3. Import the same repository in Vercel and set the project's **Root Directory** to `frontend`.
-4. Set Vercel's build output to the Vite defaults (`npm run build`, `dist`) and add `VITE_API_URL=https://your-service.onrender.com/api` for Production, Preview, and Development as needed.
-5. Set Render's `CORS_ORIGINS` to the Vercel production URL (and any preview URLs you use), comma-separated. The blueprint includes a Vercel subdomain pattern for preview builds.
+The backend connects to Supabase Postgres with its server-side database credential. Do not put the database password or a Supabase service-role key in the React app. The app's Flask/JWT authentication remains responsible for user accounts; SQLAlchemy owns data access and applies `user_id` ownership filters in the API.
 
-The frontend and backend must use matching deployed URLs. The API's `/api/health` endpoint is the Render health check.
+## Schema changes
 
-## Database migrations
-
-The app creates tables automatically for a fresh database. For tracked schema changes, use Flask-Migrate:
+Fresh databases get the `user`, `expense`, and `budget` tables from SQLAlchemy `create_all()`. For tracked schema changes, use Flask-Migrate:
 
 ```powershell
 flask --app wsgi:app db init
@@ -74,21 +50,13 @@ flask --app wsgi:app db migrate -m "describe the change"
 flask --app wsgi:app db upgrade
 ```
 
-Commit the generated `migrations/` directory after initializing it once.
+Commit the generated `migrations/` directory after initializing it once. For a production database with data, apply migrations before deploying code that depends on a schema change.
 
-## Production
+## Configuration
 
-Set a strong `SECRET_KEY` and a persistent `DATABASE_URL` in the host environment. Use PostgreSQL for a multi-instance deployment; local SQLite files are not shared across ephemeral instances. Start with:
+- `SUPABASE_DB_URL`: Supabase PostgreSQL connection URL; takes precedence over `DATABASE_URL`.
+- `DATABASE_URL`: optional SQLAlchemy database URL (SQLite is used when neither URL is set).
+- `SECRET_KEY`, `JWT_SECRET_KEY`: Flask session and API token signing secrets.
+- `CORS_ORIGINS`: comma-separated allowed frontend origins.
 
-```sh
-gunicorn wsgi:app
-```
-
-`render.yaml` includes a starter Render configuration and persistent disk for SQLite. Render generates separate Flask and JWT secrets automatically.
-
-## Notes
-
-- Bootstrap and fonts are loaded from public CDNs; Chart.js is included in the frontend bundle.
-- The `.env` file is ignored by Git; keep credentials out of source control.
-- Flask-Migrate is included for database evolution. The fresh install uses `create_all()` so it is immediately runnable before a migration history is initialized.
->>>>>>> origin/master
+Keep `.env` private; it is ignored by Git. The `/api/health` endpoint is the service health check.

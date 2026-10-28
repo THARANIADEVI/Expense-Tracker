@@ -14,9 +14,5 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         value: 'https://.*\.vercel\.app,http://localhost:5173,http://127.0.0.1:5173'
-      - key: DATABASE_URL
-        value: sqlite:////var/data/expense_tracker.db
-    disk:
-      name: pennywise-data
-      mountPath: /var/data
-      sizeGB: 1
+      - key: SUPABASE_DB_URL
+        sync: false

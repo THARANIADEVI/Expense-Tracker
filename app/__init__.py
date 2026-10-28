@@ -22,11 +22,18 @@ jwt = JWTManager()
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
+    database_url = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL", "sqlite:///expense_tracker.db")
+    # Supabase supplies a standard PostgreSQL URL. psycopg is the maintained
+    # SQLAlchemy driver used by this app; preserve any query options such as sslmode.
+    if database_url.startswith("postgres://"):
+        database_url = "postgresql+psycopg://" + database_url[len("postgres://"):]
+    elif database_url.startswith("postgresql://"):
+        database_url = "postgresql+psycopg://" + database_url[len("postgresql://"):]
     app.config.from_mapping(
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-only-change-this-secret"),
         JWT_SECRET_KEY=os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "dev-only-change-this-secret")),
         JWT_ACCESS_TOKEN_EXPIRES=timedelta(days=7),
-        SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///expense_tracker.db"),
+        SQLALCHEMY_DATABASE_URI=database_url,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
