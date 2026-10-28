@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: pennywise-expense-tracker
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: 'https://.*\.vercel\.app,http://localhost:5173,http://127.0.0.1:5173'
+      - key: DATABASE_URL
+        value: sqlite:////var/data/expense_tracker.db
+    disk:
+      name: pennywise-data
+      mountPath: /var/data
+      sizeGB: 1
