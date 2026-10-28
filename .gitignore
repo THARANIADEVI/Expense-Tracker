@@ -1,0 +1,13 @@
+.env
+.venv/
+.venv312/
+venv/
+.tmp/
+__pycache__/
+*.py[cod]
+instance/
+.pytest_cache/
+.mypy_cache/
+dist/
+node_modules/
+frontend/dist/
